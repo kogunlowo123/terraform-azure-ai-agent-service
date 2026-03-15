@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>terraform-azure-ai-agent-service | Architecture</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b0c0b;color:#f5f2eb;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;line-height:1.7;padding:0}
+a{color:#c8420a;text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+header{background:linear-gradient(135deg,#0b0c0b 0%,#1a1b1a 100%);border-bottom:2px solid #c8420a;padding:2rem 0}
+header .container{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+h1{font-size:1.8rem;color:#f5f2eb}h2{font-size:1.4rem;color:#c8420a;margin:2rem 0 1rem;padding-bottom:0.5rem;border-bottom:1px solid #2a2b2a}h3{font-size:1.1rem;color:#f5f2eb;margin:1.5rem 0 0.75rem}
+.badge{background:#0078D4;color:#fff;padding:0.3rem 1rem;border-radius:4px;font-size:0.85rem;font-weight:600;letter-spacing:0.5px}.badge-type{background:#c8420a}
+.summary{background:#1a1b1a;border:1px solid #2a2b2a;border-radius:8px;padding:1.5rem;margin:1.5rem 0;font-size:0.95rem;line-height:1.8}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.5rem 0}
+.card{background:#1a1b1a;border:1px solid #2a2b2a;border-radius:8px;padding:1.25rem;transition:border-color 0.2s}.card:hover{border-color:#c8420a}
+.card-title{font-size:0.95rem;color:#c8420a;margin-bottom:0.5rem}.card-value{font-size:1.3rem;color:#f5f2eb;font-weight:700}.card-desc{font-size:0.8rem;color:#888;margin-top:0.25rem}
+.arch-diagram{background:#1a1b1a;border:1px solid #2a2b2a;border-radius:8px;padding:2rem;margin:1.5rem 0;overflow-x:auto}
+.flow{display:flex;flex-direction:column;align-items:center;gap:1rem}
+.flow-row{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;align-items:center}
+.flow-box{background:#0b0c0b;border:2px solid #c8420a;border-radius:8px;padding:0.75rem 1.25rem;text-align:center;font-size:0.85rem;min-width:140px}
+.flow-box.primary{border-color:#0078D4;background:#0a1628}.flow-box.secondary{border-color:#3F8624;background:#0a1a0a}.flow-box.accent{border-color:#c8420a;background:#1a0f0a}.flow-box.purple{border-color:#8C4FFF;background:#140a28}.flow-box.warning{border-color:#FF9900;background:#1a1400}
+.flow-arrow{color:#555;font-size:1.5rem}.flow-label{font-size:0.7rem;color:#888;margin-top:0.2rem}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.85rem}
+th{background:#1a1b1a;color:#c8420a;text-align:left;padding:0.75rem;border:1px solid #2a2b2a;font-weight:600}
+td{padding:0.75rem;border:1px solid #2a2b2a;color:#f5f2eb}tr:nth-child(even){background:#111211}tr:hover{background:#1a1b1a}
+.check{color:#3F8624}.x{color:#DD344C}
+.checklist{list-style:none;padding:0}.checklist li{padding:0.4rem 0;padding-left:1.5rem;position:relative;font-size:0.9rem}.checklist li::before{content:"[  ]";position:absolute;left:0;color:#c8420a;font-size:0.85rem}
+code{background:#1a1b1a;padding:0.15rem 0.4rem;border-radius:3px;font-size:0.85rem;color:#c8420a}
+pre{background:#1a1b1a;border:1px solid #2a2b2a;border-radius:8px;padding:1.25rem;overflow-x:auto;font-size:0.85rem;margin:1rem 0}
+.data-flow-step{display:flex;align-items:flex-start;gap:1rem;margin:0.75rem 0}.step-num{background:#c8420a;color:#fff;min-width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0}.step-text{font-size:0.9rem}
+footer{background:#1a1b1a;border-top:2px solid #c8420a;padding:2rem 0;margin-top:3rem;text-align:center;font-size:0.8rem;color:#555}
+.section{margin-bottom:2rem}
+</style>
+</head>
+<body>
+<header>
+<div class="container">
+<div>
+<h1>terraform-azure-ai-agent-service</h1>
+<p style="color:#888;margin-top:0.3rem;font-size:0.9rem">Azure AI Agent Service Infrastructure Module</p>
+</div>
+<div>
+<span class="badge">Azure</span>
+<span class="badge badge-type">AI / OpenAI</span>
+</div>
+</div>
+</header>
+
+<div class="container">
+
+<section class="section">
+<h2>Executive Summary</h2>
+<div class="summary">
+Terraform module for provisioning the complete Azure AI Agent Service infrastructure. Deploys an Azure OpenAI Cognitive Account with GPT-4o model deployment, Azure AI Search for grounded retrieval, a Storage Account with file-upload and code-interpreter containers, Key Vault for secret management, Log Analytics and Application Insights for observability, a User-Assigned Managed Identity with fine-grained RBAC role assignments, diagnostic settings, and optional private endpoints for network isolation across all services.
+</div>
+</section>
+
+<section class="section">
+<h2>Overview Cards</h2>
+<div class="cards">
+<div class="card"><div class="card-title">Resources</div><div class="card-value">18+</div><div class="card-desc">OpenAI, Search, Storage, KV, RBAC, PE</div></div>
+<div class="card"><div class="card-title">Variables</div><div class="card-value">17</div><div class="card-desc">3 required, 14 optional</div></div>
+<div class="card"><div class="card-title">Outputs</div><div class="card-value">16</div><div class="card-desc">Endpoints, IDs, identities, keys</div></div>
+<div class="card"><div class="card-title">Provider</div><div class="card-value">azurerm</div><div class="card-desc">>= 3.90.0</div></div>
+<div class="card"><div class="card-title">Model</div><div class="card-value">GPT-4o</div><div class="card-desc">Standard, 30K TPM capacity</div></div>
+<div class="card"><div class="card-title">Security</div><div class="card-value">RBAC + PE</div><div class="card-desc">Managed identity, private endpoints</div></div>
+</div>
+</section>
+
+<section class="section">
+<h2>Architecture Diagram</h2>
+<div class="arch-diagram">
+<div class="flow">
+<div class="flow-row">
+<div class="flow-box warning">Client Application<div class="flow-label">SDK / Assistants API</div></div>
+</div>
+<div class="flow-arrow">&#x2193;</div>
+<div class="flow-row">
+<div class="flow-box primary">Azure OpenAI<div class="flow-label">Cognitive Account (S0)</div></div>
+<div class="flow-box primary">GPT-4o Deployment<div class="flow-label">Standard, 30K TPM</div></div>
+</div>
+<div class="flow-arrow">&#x2193;</div>
+<div class="flow-row">
+<div class="flow-box secondary">Azure AI Search<div class="flow-label">Grounded Retrieval</div></div>
+<div class="flow-box secondary">Storage Account<div class="flow-label">file-uploads / code-interpreter</div></div>
+<div class="flow-box purple">Key Vault<div class="flow-label">API Key Secret</div></div>
+</div>
+<div class="flow-arrow">&#x2193;</div>
+<div class="flow-row">
+<div class="flow-box accent">User-Assigned Identity<div class="flow-label">RBAC Role Assignments</div></div>
+</div>
+<div class="flow-arrow">&#x2193;</div>
+<div class="flow-row">
+<div class="flow-box warning">Log Analytics<div class="flow-label">Diagnostics</div></div>
+<div class="flow-box warning">Application Insights<div class="flow-label">Monitoring</div></div>
+</div>
+<div class="flow-arrow">&#x2193;</div>
+<div class="flow-row">
+<div class="flow-box purple">Private Endpoint (OpenAI)<div class="flow-label">Optional</div></div>
+<div class="flow-box purple">Private Endpoint (Search)<div class="flow-label">Optional</div></div>
+<div class="flow-box purple">Private Endpoint (Storage)<div class="flow-label">Optional</div></div>
+<div class="flow-box purple">Private Endpoint (KV)<div class="flow-label">Optional</div></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section">
+<h2>Component Breakdown</h2>
+<table>
+<tr><th>Component</th><th>Resource Type</th><th>Purpose</th><th>Configuration</th></tr>
+<tr><td>Azure OpenAI</td><td><code>azurerm_cognitive_account</code></td><td>AI inference engine for agents</td><td>S0 SKU, SystemAssigned + UserAssigned identity</td></tr>
+<tr><td>Model Deployment</td><td><code>azurerm_cognitive_deployment</code></td><td>GPT-4o model for agent responses</td><td>Standard SKU, configurable capacity</td></tr>
+<tr><td>AI Search</td><td><code>azurerm_search_service</code></td><td>Grounded retrieval for RAG</td><td>Basic SKU, SystemAssigned identity</td></tr>
+<tr><td>Storage Account</td><td><code>azurerm_storage_account</code></td><td>File uploads + code interpreter</td><td>TLS 1.2, versioning, soft delete</td></tr>
+<tr><td>Key Vault</td><td><code>azurerm_key_vault</code></td><td>Store OpenAI API key securely</td><td>RBAC auth, purge protection</td></tr>
+<tr><td>Managed Identity</td><td><code>azurerm_user_assigned_identity</code></td><td>Service-to-service authentication</td><td>OpenAI User, Blob Contributor, Search Contributor, KV Reader</td></tr>
+<tr><td>RBAC Assignments</td><td><code>azurerm_role_assignment</code> x7</td><td>Least-privilege access between services</td><td>Identity + OpenAI system identity roles</td></tr>
+<tr><td>Diagnostics</td><td><code>azurerm_monitor_diagnostic_setting</code></td><td>Audit and request/response logging</td><td>OpenAI + Search to Log Analytics</td></tr>
+<tr><td>Private Endpoints</td><td><code>azurerm_private_endpoint</code> x4</td><td>Network isolation for all services</td><td>Optional, requires subnet</td></tr>
+</table>
+</section>
+
+<section class="section">
+<h2>Data Flow</h2>
+<div class="data-flow-step"><div class="step-num">1</div><div class="step-text">Client application calls Azure OpenAI Assistants API via SDK or REST.</div></div>
+<div class="data-flow-step"><div class="step-num">2</div><div class="step-text">OpenAI Cognitive Account processes the request using the GPT-4o deployment.</div></div>
+<div class="data-flow-step"><div class="step-num">3</div><div class="step-text">For RAG, OpenAI queries Azure AI Search for grounded retrieval using Search Index Data Reader role.</div></div>
+<div class="data-flow-step"><div class="step-num">4</div><div class="step-text">File uploads stored in the file-uploads blob container; code interpreter uses dedicated container.</div></div>
+<div class="data-flow-step"><div class="step-num">5</div><div class="step-text">API keys stored in Key Vault; managed identity accesses secrets via RBAC.</div></div>
+<div class="data-flow-step"><div class="step-num">6</div><div class="step-text">Diagnostic settings send audit logs and metrics to Log Analytics workspace.</div></div>
+<div class="data-flow-step"><div class="step-num">7</div><div class="step-text">Application Insights provides end-to-end tracing and performance monitoring.</div></div>
+</section>
+
+<section class="section">
+<h2>Security Controls</h2>
+<table>
+<tr><th>Control</th><th>Implementation</th><th>Default</th></tr>
+<tr><td>Managed Identity</td><td>User-assigned identity with least-privilege RBAC</td><td>Always created</td></tr>
+<tr><td>RBAC Authorization</td><td>7 role assignments for service-to-service access</td><td>Enabled</td></tr>
+<tr><td>Network ACLs</td><td>IP-based firewall on OpenAI service</td><td>Allow all (configurable)</td></tr>
+<tr><td>Private Endpoints</td><td>Private connectivity for OpenAI, Search, Storage, KV</td><td>Disabled (optional)</td></tr>
+<tr><td>Key Vault</td><td>RBAC-based, purge protection, 90-day soft delete</td><td>Enabled</td></tr>
+<tr><td>TLS</td><td>Storage Account minimum TLS 1.2</td><td>Enforced</td></tr>
+<tr><td>Blob Versioning</td><td>Version tracking + 7-day delete retention</td><td>Enabled</td></tr>
+<tr><td>Audit Logging</td><td>Diagnostic settings for OpenAI and Search</td><td>Enabled</td></tr>
+</table>
+</section>
+
+<section class="section">
+<h2>Industry Adaptation</h2>
+<table>
+<tr><th>Capability</th><th>Healthcare</th><th>Finance</th><th>Government</th><th>Retail</th><th>SaaS</th></tr>
+<tr><td>Private Endpoints</td><td class="check">&#10003; Required</td><td class="check">&#10003; Required</td><td class="check">&#10003; Required</td><td>Optional</td><td>Optional</td></tr>
+<tr><td>Key Vault Secrets</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+<tr><td>RBAC Identity</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+<tr><td>Audit Logging</td><td class="check">&#10003; HIPAA</td><td class="check">&#10003; SOX</td><td class="check">&#10003; FedRAMP</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+<tr><td>IP Restrictions</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td>Optional</td><td>Optional</td></tr>
+<tr><td>Data Encryption</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td><td class="check">&#10003;</td></tr>
+</table>
+</section>
+
+<section class="section">
+<h2>Production Readiness Checklist</h2>
+<ul class="checklist">
+<li>Enable private endpoints for all services</li>
+<li>Configure IP range restrictions on OpenAI</li>
+<li>Enable Application Insights monitoring</li>
+<li>Set appropriate model capacity (TPM) for load</li>
+<li>Configure storage replication type (GRS for production)</li>
+<li>Enable Key Vault purge protection</li>
+<li>Set log retention to compliance requirements</li>
+<li>Provision in region with OpenAI model availability</li>
+<li>Configure network ACLs to deny public access</li>
+<li>Review RBAC role assignments for least privilege</li>
+</ul>
+</section>
+
+<section class="section">
+<h2>Configuration Reference</h2>
+<table>
+<tr><th>Variable</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>name_prefix</code></td><td>string</td><td>required</td><td>Prefix for all resource names</td></tr>
+<tr><td><code>location</code></td><td>string</td><td>required</td><td>Azure region</td></tr>
+<tr><td><code>resource_group_name</code></td><td>string</td><td>required</td><td>Resource group name</td></tr>
+<tr><td><code>model_name</code></td><td>string</td><td>gpt-4o</td><td>OpenAI model to deploy</td></tr>
+<tr><td><code>model_capacity</code></td><td>number</td><td>30</td><td>TPM capacity in thousands</td></tr>
+<tr><td><code>search_service_sku</code></td><td>string</td><td>basic</td><td>AI Search SKU tier</td></tr>
+<tr><td><code>enable_private_endpoints</code></td><td>bool</td><td>false</td><td>Enable private endpoints</td></tr>
+<tr><td><code>enable_monitoring</code></td><td>bool</td><td>true</td><td>Enable Application Insights</td></tr>
+<tr><td><code>key_vault_purge_protection</code></td><td>bool</td><td>true</td><td>Key Vault purge protection</td></tr>
+<tr><td><code>log_analytics_retention_days</code></td><td>number</td><td>30</td><td>Log retention period</td></tr>
+</table>
+</section>
+
+<section class="section">
+<h2>Deployment</h2>
+<pre>
+# Verify OpenAI access
+az cognitiveservices account list-kinds | grep OpenAI
+
+# Initialize and deploy
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+
+# Verify deployment
+az cognitiveservices account show \
+  --name myagent-openai \
+  --resource-group rg-ai-agents \
+  --query "properties.endpoint" -o tsv
+</pre>
+</section>
+
+<section class="section">
+<h2>Links</h2>
+<p>
+<a href="https://learn.microsoft.com/en-us/azure/ai-services/agents/overview">Azure AI Agent Service</a> |
+<a href="https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/assistants">OpenAI Assistants How-To</a> |
+<a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/cognitive_account">Terraform Cognitive Account</a> |
+<a href="../README.md">Module README</a>
+</p>
+</section>
+
+</div>
+
+<footer>
+<div class="container">
+<p>terraform-azure-ai-agent-service Architecture Document</p>
+<p>Generated on 2026-03-15 | Terraform Azure Module</p>
+</div>
+</footer>
+</body>
+</html>
